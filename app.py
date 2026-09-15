@@ -169,7 +169,6 @@ def api():
     if not story:
         return jsonify({"error": "이야기를 들려줘야 안아줄 수 있어"}), 400
 
-    # 시스템 지침과 사용자의 이야기를 본문에 통합하여 Developer instruction 에러 방지
     full_prompt = (
         f"{SYSTEM_PROMPT}\n\n"
         f"[사용자가 털어놓은 이야기]\n"
@@ -186,8 +185,8 @@ def api():
         ]
     }
 
-    # 범용적으로 가장 안정적인 1.5-flash 엔드포인트 직접 호출
-    url = f"{GEMINI_API_BASE}/models/gemini-1.5-flash:generateContent"
+    # v1beta 표준 규격 모델 호출
+    url = f"{GEMINI_API_BASE}/models/gemini-2.5-flash:generateContent"
 
     try:
         resp = requests.post(

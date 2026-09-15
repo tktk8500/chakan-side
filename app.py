@@ -134,6 +134,7 @@ sendBtn.addEventListener('click', async () => {
     } else {
       resultText.textContent = data.reply;
       resultWrap.classList.remove('hidden');
+      storyInput.value = ''; // 답변이 성공적으로 오면 입력창을 자동으로 비웁니다
     }
   } catch (e) {
     showError('연결에 문제가 생겼어, 다시 시도해줄래?');

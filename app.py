@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import threading
 import webbrowser
 
@@ -75,13 +76,6 @@ INDEX_HTML = """<!DOCTYPE html>
     </p>
   </div>
 
-  <!-- API Key -->
-  <div class="mb-4">
-    <label class="block text-sm font-semibold text-amber-800 mb-1.5 ml-1">Gemini API Key</label>
-    <input id="apiKey" type="password" placeholder="API Key를 입력하면 자동 저장돼"
-      class="w-full px-4 py-3 rounded-xl border border-amber-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm" />
-  </div>
-
   <!-- 사연 입력 -->
   <div class="mb-4">
     <label class="block text-sm font-semibold text-amber-800 mb-1.5 ml-1">너의 이야기</label>
@@ -111,7 +105,6 @@ INDEX_HTML = """<!DOCTYPE html>
 </div>
 
 <script>
-const apiKeyInput = document.getElementById('apiKey');
 const storyInput = document.getElementById('story');
 const sendBtn = document.getElementById('sendBtn');
 const btnText = document.getElementById('btnText');
@@ -120,21 +113,10 @@ const resultWrap = document.getElementById('resultWrap');
 const resultText = document.getElementById('resultText');
 const errorWrap = document.getElementById('errorWrap');
 
-try {
-  const saved = localStorage.getItem('chakan_gemini_key');
-  if (saved) apiKeyInput.value = saved;
-} catch (e) {}
-
-apiKeyInput.addEventListener('input', () => {
-  try { localStorage.setItem('chakan_gemini_key', apiKeyInput.value); } catch (e) {}
-});
-
 sendBtn.addEventListener('click', async () => {
-  const apiKey = apiKeyInput.value.trim();
   const story = storyInput.value.trim();
   errorWrap.classList.add('hidden');
 
-  if (!apiKey) { showError('API Key를 먼저 입력해줘'); return; }
   if (!story) { showError('무슨 일이 있었는지 들려줘'); return; }
 
   setLoading(true);
@@ -144,7 +126,7 @@ sendBtn.addEventListener('click', async () => {
     const res = await fetch('/api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: apiKey, story: story })
+      body: JSON.stringify({ story: story })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -184,11 +166,11 @@ def index():
 @app.route("/api", methods=["POST"])
 def api():
     data = request.get_json(silent=True) or {}
-    api_key = (data.get("api_key") or "").strip()
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     story = (data.get("story") or "").strip()
 
     if not api_key:
-        return jsonify({"error": "API Key가 필요해"}), 400
+        return jsonify({"error": "서버에 API Key가 설정되어 있지 않아"}), 500
     if not story:
         return jsonify({"error": "이야기를 들려줘야 안아줄 수 있어"}), 400
 

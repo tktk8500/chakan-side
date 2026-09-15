@@ -43,7 +43,7 @@ INDEX_HTML = """<!DOCTYPE html>
     border: 3px solid #F0E1C6;
     border-top: 3px solid #C6902F;
     border-radius: 50%;
-    width: 22px; height: 22px;
+    width: 24px; height: 24px;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -57,7 +57,7 @@ INDEX_HTML = """<!DOCTYPE html>
   <!-- 브랜딩 배너 -->
   <div class="rounded-3xl card-shadow p-6 mb-6 text-center"
        style="background: linear-gradient(135deg, #F6C77A 0%, #E2A84E 60%, #C6902F 100%);">
-    <svg width="52" height="52" viewBox="0 0 52 52" class="mx-auto mb-2">
+    <svg width="56" height="56" viewBox="0 0 52 52" class="mx-auto mb-2">
       <circle cx="26" cy="26" r="24" fill="#FFF8ED" opacity="0.25"/>
       <path d="M26 40C26 40 10 31.2 10 20.6C10 14.7 14.6 10 20.3 10C23 10 25.4 11.3 26 13.1C26.6 11.3 29 10 31.7 10C37.4 10 42 14.7 42 20.6C42 31.2 26 40 26 40Z"
             fill="#FFFDF7" stroke="#FFFDF7" stroke-width="1"/>
@@ -65,42 +65,42 @@ INDEX_HTML = """<!DOCTYPE html>
     <div class="text-3xl font-extrabold tracking-tight" style="color:#FFFDF7; text-shadow: 0 2px 6px rgba(120,80,20,0.35);">
       착한니편
     </div>
-    <div class="text-xs mt-1 font-medium" style="color:#FFF3DC;">언제나 네 편, 조건 없이</div>
+    <div class="text-sm mt-1.5 font-medium" style="color:#FFF3DC;">언제나 네 편, 조건 없이</div>
   </div>
 
-  <!-- 헤더 안내 문구 -->
+  <!-- 헤더 안내 문구 (글자 크기 17px로 확대) -->
   <div class="bg-white/70 rounded-2xl p-5 mb-6 card-shadow border border-amber-100">
-    <p class="text-[15px] leading-relaxed text-amber-900">
+    <p class="text-[17px] leading-relaxed text-amber-950 font-medium">
       착한 니편이 되어줄게... 일단 널 알아야 내가 너의 편이 되어줄 수 있겠지.
       세상이 다 등 돌려도 난 무조건 네 편이야. 준비되었을 때 너의 이야기를 들려줄래?
     </p>
   </div>
 
-  <!-- 사연 입력 -->
-  <div class="mb-4">
-    <label class="block text-sm font-semibold text-amber-800 mb-1.5 ml-1">너의 이야기</label>
+  <!-- 사연 입력 (글자 크기 16px로 확대) -->
+  <div class="mb-5">
+    <label class="block text-base font-bold text-amber-900 mb-2 ml-1">너의 이야기</label>
     <textarea id="story" rows="6" placeholder="무슨 일이든 괜찮아, 여기서는 다 털어놔도 돼..."
-      class="w-full px-4 py-3 rounded-xl border border-amber-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm resize-none"></textarea>
+      class="w-full px-4 py-3.5 rounded-xl border border-amber-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-300 text-base leading-relaxed resize-none text-gray-800"></textarea>
   </div>
 
   <!-- 전송 버튼 -->
   <button id="sendBtn"
-    class="w-full py-3.5 rounded-xl font-bold text-white text-[15px] flex items-center justify-center gap-2 card-shadow transition active:scale-95"
+    class="w-full py-4 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 card-shadow transition active:scale-95 cursor-pointer"
     style="background: linear-gradient(135deg, #E2A84E, #C6902F);">
     <span id="btnText">내 편 들어줘 💌</span>
     <span id="btnSpinner" class="spinner hidden"></span>
   </button>
 
-  <!-- 결과 카드 -->
+  <!-- 결과 카드 (답장 글자 크기 18px로 대폭 확대) -->
   <div id="resultWrap" class="hidden mt-6 fade-in">
-    <div class="rounded-2xl p-5 card-shadow border border-amber-100"
+    <div class="rounded-2xl p-6 card-shadow border border-amber-100"
          style="background: linear-gradient(180deg, #FFFDF7 0%, #FCF3E0 100%);">
-      <div class="text-xs font-bold mb-2" style="color:#C6902F;">착한니편의 손편지</div>
-      <p id="resultText" class="text-[15px] leading-relaxed text-amber-950 whitespace-pre-wrap"></p>
+      <div class="text-sm font-extrabold mb-3 tracking-wide" style="color:#C6902F;">착한니편의 손편지 💌</div>
+      <p id="resultText" class="text-[18px] leading-relaxed text-amber-950 whitespace-pre-wrap font-semibold"></p>
     </div>
   </div>
 
-  <div id="errorWrap" class="hidden mt-4 text-sm text-red-500 text-center"></div>
+  <div id="errorWrap" class="hidden mt-4 text-base text-red-500 text-center font-medium"></div>
 
 </div>
 
@@ -134,7 +134,7 @@ sendBtn.addEventListener('click', async () => {
     } else {
       resultText.textContent = data.reply;
       resultWrap.classList.remove('hidden');
-      storyInput.value = ''; // 답변이 성공적으로 오면 입력창을 자동으로 비웁니다
+      storyInput.value = ''; // 답장이 도착하면 사연 입력창 자동 비우기
     }
   } catch (e) {
     showError('연결에 문제가 생겼어, 다시 시도해줄래?');

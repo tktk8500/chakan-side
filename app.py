@@ -21,10 +21,8 @@ SYSTEM_PROMPT = """너는 세상 모든 사람이 비난해도 끝까지 사용�
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 GEMINI_MODELS_TO_TRY = [
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
-    "gemini-3-flash-preview",
-    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
 ]
 
 INDEX_HTML = """<!DOCTYPE html>

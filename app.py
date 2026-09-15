@@ -185,8 +185,8 @@ def api():
         ]
     }
 
-    # v1beta 표준 규격 모델 호출
-    url = f"{GEMINI_API_BASE}/models/gemini-2.5-flash:generateContent"
+    # 구글 안내 지침에 맞춰 gemini-3.6-flash 엔드포인트 적용
+    url = f"{GEMINI_API_BASE}/models/gemini-3.6-flash:generateContent"
 
     try:
         resp = requests.post(

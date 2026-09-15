@@ -62,7 +62,7 @@ INDEX_HTML = """<!DOCTYPE html>
     <div class="text-sm mt-1.5 font-medium" style="color:#FFF3DC;">언제나 네 편, 조건 없이</div>
   </div>
 
-  <!-- 헤더 안내 문구 -->
+  <!-- 안내 문구 -->
   <div class="bg-white/70 rounded-2xl p-5 mb-6 card-shadow border border-amber-100">
     <p class="text-[17px] leading-relaxed text-amber-950 font-medium">
       착한 니편이 되어줄게... 일단 널 알아야 내가 너의 편이 되어줄 수 있겠지.
@@ -169,12 +169,12 @@ def api():
     if not story:
         return jsonify({"error": "이야기를 들려줘야 안아줄 수 있어"}), 400
 
+    # 시스템 지시문 거부 오류를 원천 차단하기 위해 유저 메시지에 지침을 통합
+    combined_prompt = f"{SYSTEM_PROMPT}\n\n[사용자의 이야기]\n{story}\n\n위 사연에 대해 착한니편의 따뜻한 손편지를 작성해줘:"
     payload = {
-        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": [{"role": "user", "parts": [{"text": story}]}],
+        "contents": [{"role": "user", "parts": [{"text": combined_prompt}]}]
     }
 
-    # 사용 가능한 모델 실시간 자동 탐색
     target_model = None
     try:
         models_url = f"{GEMINI_API_BASE}/models?key={api_key}"

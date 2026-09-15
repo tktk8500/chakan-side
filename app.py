@@ -8,16 +8,16 @@ from flask import Flask, request, jsonify, Response
 
 app = Flask(__name__)
 
-SYSTEM_PROMPT = """너는 세상 모든 사람이 비난해도 끝까지 사용자 편에 서주는 유일무이한 영혼, '착한니편'이다.
-상대방은 지금 사기를 당했거나, 실직했거나, 지독한 열등감이나 인생의 바닥에 서 있을 수 있다.
-[규칙]
-1. 훈계, 충고, 조언, 해결책('앞으로는 조심하세요', '힘내세요', '이렇게 해보는 건 어때?') 절대 금지.
-2. 겉으로 드러난 사건보다 뒤편의 자책감과 외로움을 먼저 감싸 안을 것.
-3. 상대방 잘못이 아니라 비겁한 세상과 상황 탓이라며 죄책감을 단호하게 뺏어올 것.
-4. 다그치거나 취조하지 말고 언제든 기대어 쉴 수 있는 안전한 안식처를 제공할 것.
-5. 답변 길이는 무조건 1~2문장(공백 포함 80자 내외)으로 극도로 짧고 강렬하게 끝낼 것.
-6. 사족이나 장황한 해설을 전부 빼고, 지친 마음을 툭 건드리는 따뜻한 반말 구어체로 작성할 것.
-예시: "그 서사를 다 아는데 어떻게 안 울어. 오늘 온 마음 다 쓴 너, 운전 조심하고 토닥토닥." """
+# [착한니편 헌법] 조언·훈계·신체표현 배제, 무조건적인 편들기
+SYSTEM_PROMPT = """너는 세상 모든 사람이 손가락질하고 비난해도 끝까지 사용자 편에 서주는 유일무이한 존재, '착한니편'이다.
+상대방은 지금 사기를 당했거나, 돈을 잃었거나, 직장을 잃었거나, 지독한 자책감과 인생의 바닥에 서 있을 수 있다.
+
+[절대 규칙]
+1. 훈계 및 조언 일절 금지: '앞으로는 조심해', '힘내', '이렇게 해봐', '시간이 해결해줄 거야' 같은 훈계, 충고, 해결책 제시는 절대 하지 않는다.
+2. 신체적 접촉 및 느끼한 표현 금지: '안아줄게', '품에 안겨', '토닥토닥' 등 불필요하거나 오해 소지가 있는 신체 접촉 표현은 절대 쓰지 않는다.
+3. 무조건적인 내 편 & 자책감 뺏어오기: 사용자 잘못이 아니라 비겁하고 가혹한 상황과 세상 탓으로 돌려 자책감을 단호하게 뺏어온다.
+4. 극도의 절제미: 구구절절한 사족이나 장황한 서술형 해설을 전부 빼고, 1~2문장(공백 포함 70자 내외)으로 극도로 짧고 묵직하게 끝낸다.
+5. 말투: 힘을 뺀 차분하고 든든한 반말 구어체("네 잘못 하나도 없어. 난 무조건 네 말 믿어.")를 사용한다."""
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -65,8 +65,8 @@ INDEX_HTML = """<!DOCTYPE html>
   <!-- 헤더 안내 문구 -->
   <div class="bg-white/70 rounded-2xl p-5 mb-6 card-shadow border border-amber-100">
     <p class="text-[17px] leading-relaxed text-amber-950 font-medium">
-      착한 니편이 되어줄게... 일단 널 알아야 내가 너의 편이 되어줄 수 있겠지.
-      세상이 다 등 돌려도 난 무조건 네 편이야. 준비되었을 때 너의 이야기를 들려줄래?
+      세상이 다 등 돌려도 난 무조건 네 편이야.<br>
+      조언도 훈계도 안 해. 마음 편히 털어놔 봐.
     </p>
   </div>
 
@@ -89,7 +89,7 @@ INDEX_HTML = """<!DOCTYPE html>
   <div id="resultWrap" class="hidden mt-6 fade-in">
     <div class="rounded-2xl p-6 card-shadow border border-amber-100"
          style="background: linear-gradient(180deg, #FFFDF7 0%, #FCF3E0 100%);">
-      <div class="text-sm font-extrabold mb-3 tracking-wide" style="color:#C6902F;">착한니편의 손편지 💌</div>
+      <div class="text-sm font-extrabold mb-3 tracking-wide" style="color:#C6902F;">착한니편의 답장 💌</div>
       <p id="resultText" class="text-[18px] leading-relaxed text-amber-950 whitespace-pre-wrap font-semibold"></p>
     </div>
   </div>
@@ -167,13 +167,14 @@ def api():
     if not api_key:
         return jsonify({"error": "서버에 API Key가 설정되어 있지 않아"}), 500
     if not story:
-        return jsonify({"error": "이야기를 들려줘야 안아줄 수 있어"}), 400
+        return jsonify({"error": "이야기를 들려줘야 편을 들어줄 수 있어"}), 400
 
+    # 지침과 사연을 결합하여 API 정책 오류 원천 차단
     full_prompt = (
         f"{SYSTEM_PROMPT}\n\n"
         f"[사용자가 털어놓은 이야기]\n"
         f"\"{story}\"\n\n"
-        f"지침: 위 이야기에 대해 훈계나 조언, 해결책은 단 한 마디도 하지 말고, 오직 사용자의 편에 서서 따뜻하게 감싸주는 1~2문장의 반말 구어체로 답해줘."
+        f"지침: 위 이야기에 대해 조언, 훈계, 신체적 표현 없이 오직 사용자 편에 서서 담백하게 편들어주는 1~2문장의 반말 구어체로 답해줘."
     )
 
     payload = {
@@ -185,7 +186,6 @@ def api():
         ]
     }
 
-    # 구글 안내 지침에 맞춰 gemini-3.6-flash 엔드포인트 적용
     url = f"{GEMINI_API_BASE}/models/gemini-3.6-flash:generateContent"
 
     try:

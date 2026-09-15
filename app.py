@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, Response
 
 app = Flask(__name__)
 
-# [착한니편 헌법] 조언·훈계·신체표현 배제, 무조건적인 편들기
+# [착한니편 헌법] 조언·훈계·신체표현 배제, 무조건적인 내 편 들어주기
 SYSTEM_PROMPT = """너는 세상 모든 사람이 손가락질하고 비난해도 끝까지 사용자 편에 서주는 유일무이한 존재, '착한니편'이다.
 상대방은 지금 사기를 당했거나, 돈을 잃었거나, 직장을 잃었거나, 지독한 자책감과 인생의 바닥에 서 있을 수 있다.
 
@@ -37,11 +37,11 @@ INDEX_HTML = """<!DOCTYPE html>
     border: 3px solid #F0E1C6;
     border-top: 3px solid #C6902F;
     border-radius: 50%;
-    width: 24px; height: 24px;
+    width: 22px; height: 22px;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .fade-in { animation: fadeIn 0.5s ease-in; }
+  .fade-in { animation: fadeIn 0.4s ease-in; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -81,8 +81,8 @@ INDEX_HTML = """<!DOCTYPE html>
   <button id="sendBtn"
     class="w-full py-4 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 card-shadow transition active:scale-95 cursor-pointer"
     style="background: linear-gradient(135deg, #E2A84E, #C6902F);">
-    <span id="btnText">내 편 들어줘 💌</span>
     <span id="btnSpinner" class="spinner hidden"></span>
+    <span id="btnText">내 편 들어줘 💌</span>
   </button>
 
   <!-- 결과 카드 -->
@@ -107,11 +107,23 @@ const resultWrap = document.getElementById('resultWrap');
 const resultText = document.getElementById('resultText');
 const errorWrap = document.getElementById('errorWrap');
 
+let loadingTimer = null;
+
+// 판에 박힌 로딩 대신, 든든함과 위트가 담긴 실시간 대기 문구
+const loadingMessages = [
+  "지금 찾아온 사람들이 많아 한 명씩 편들어주는 중...",
+  "금방 네 차례야. 네 이야기 꼼꼼하게 읽고 있어...",
+  "세상 억까 버텨내느라 고생했다. 니편이 답장 쓰는 중..."
+];
+
 sendBtn.addEventListener('click', async () => {
   const story = storyInput.value.trim();
   errorWrap.classList.add('hidden');
 
-  if (!story) { showError('무슨 일이 있었는지 들려줘'); return; }
+  if (!story) { 
+    showError('무슨 일이 있었는지 털어놔 봐'); 
+    return; 
+  }
 
   setLoading(true);
   resultWrap.classList.add('hidden');
@@ -124,14 +136,14 @@ sendBtn.addEventListener('click', async () => {
     });
     const data = await res.json();
     if (!res.ok) {
-      showError(data.error || '잠시 문제가 생겼어, 다시 시도해줄래?');
+      showError(data.error || '잠시 연결이 꼬였어. 다시 눌러줘.');
     } else {
       resultText.textContent = data.reply;
       resultWrap.classList.remove('hidden');
       storyInput.value = '';
     }
   } catch (e) {
-    showError('연결에 문제가 생겼어, 다시 시도해줄래?');
+    showError('연결에 문제가 생겼어. 다시 한 번 시도해줘.');
   } finally {
     setLoading(false);
   }
@@ -139,8 +151,22 @@ sendBtn.addEventListener('click', async () => {
 
 function setLoading(isLoading) {
   sendBtn.disabled = isLoading;
-  btnText.classList.toggle('hidden', isLoading);
+  storyInput.disabled = isLoading;
   btnSpinner.classList.toggle('hidden', !isLoading);
+
+  if (isLoading) {
+    let msgIndex = 0;
+    btnText.textContent = loadingMessages[0];
+    
+    // 3.2초마다 멘트 순환
+    loadingTimer = setInterval(() => {
+      msgIndex = (msgIndex + 1) % loadingMessages.length;
+      btnText.textContent = loadingMessages[msgIndex];
+    }, 3200);
+  } else {
+    clearInterval(loadingTimer);
+    btnText.textContent = '내 편 들어줘 💌';
+  }
 }
 
 function showError(msg) {
@@ -169,7 +195,7 @@ def api():
     if not story:
         return jsonify({"error": "이야기를 들려줘야 편을 들어줄 수 있어"}), 400
 
-    # 지침과 사연을 결합하여 API 정책 오류 원천 차단
+    # 시스템 지침과 사연을 본문에 직접 결합해 호환성 에러 방지
     full_prompt = (
         f"{SYSTEM_PROMPT}\n\n"
         f"[사용자가 털어놓은 이야기]\n"
@@ -186,6 +212,7 @@ def api():
         ]
     }
 
+    # 구글 최신 권장 엔드포인트 모델 사용
     url = f"{GEMINI_API_BASE}/models/gemini-3.6-flash:generateContent"
 
     try:

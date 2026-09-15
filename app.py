@@ -11,7 +11,7 @@ app = Flask(__name__)
 SYSTEM_PROMPT = """너는 세상 모든 사람이 비난해도 끝까지 사용자 편에 서주는 유일무이한 영혼, '착한니편'이다.
 상대방은 지금 사기를 당했거나, 실직했거나, 지독한 열등감이나 인생의 바닥에 서 있을 수 있다.
 [규칙]
-1. 훈계, 충고, 해결책('앞으로는 조심하세요', '힘내세요') 절대 금지.
+1. 훈계, 충고, 조언, 해결책('앞으로는 조심하세요', '힘내세요', '이렇게 해보는 건 어때?') 절대 금지.
 2. 겉으로 드러난 사건보다 뒤편의 자책감과 외로움을 먼저 감싸 안을 것.
 3. 상대방 잘못이 아니라 비겁한 세상과 상황 탓이라며 죄책감을 단호하게 뺏어올 것.
 4. 다그치거나 취조하지 말고 언제든 기대어 쉴 수 있는 안전한 안식처를 제공할 것.
@@ -62,7 +62,7 @@ INDEX_HTML = """<!DOCTYPE html>
     <div class="text-sm mt-1.5 font-medium" style="color:#FFF3DC;">언제나 네 편, 조건 없이</div>
   </div>
 
-  <!-- 안내 문구 -->
+  <!-- 헤더 안내 문구 -->
   <div class="bg-white/70 rounded-2xl p-5 mb-6 card-shadow border border-amber-100">
     <p class="text-[17px] leading-relaxed text-amber-950 font-medium">
       착한 니편이 되어줄게... 일단 널 알아야 내가 너의 편이 되어줄 수 있겠지.
@@ -169,43 +169,32 @@ def api():
     if not story:
         return jsonify({"error": "이야기를 들려줘야 안아줄 수 있어"}), 400
 
-    # 시스템 지시문 거부 오류를 원천 차단하기 위해 유저 메시지에 지침을 통합
-    combined_prompt = f"{SYSTEM_PROMPT}\n\n[사용자의 이야기]\n{story}\n\n위 사연에 대해 착한니편의 따뜻한 손편지를 작성해줘:"
+    # 시스템 지침과 사용자의 이야기를 본문에 통합하여 Developer instruction 에러 방지
+    full_prompt = (
+        f"{SYSTEM_PROMPT}\n\n"
+        f"[사용자가 털어놓은 이야기]\n"
+        f"\"{story}\"\n\n"
+        f"지침: 위 이야기에 대해 훈계나 조언, 해결책은 단 한 마디도 하지 말고, 오직 사용자의 편에 서서 따뜻하게 감싸주는 1~2문장의 반말 구어체로 답해줘."
+    )
+
     payload = {
-        "contents": [{"role": "user", "parts": [{"text": combined_prompt}]}]
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": full_prompt}]
+            }
+        ]
     }
 
-    target_model = None
-    try:
-        models_url = f"{GEMINI_API_BASE}/models?key={api_key}"
-        list_res = requests.get(models_url, timeout=10)
-        if list_res.status_code == 200:
-            models_data = list_res.json().get("models", [])
-            valid_models = [
-                m["name"]
-                for m in models_data
-                if "generateContent" in m.get("supportedGenerationMethods", [])
-            ]
-            flash_models = [m for m in valid_models if "flash" in m]
-            if flash_models:
-                target_model = flash_models[-1]
-            elif valid_models:
-                target_model = valid_models[-1]
-    except Exception:
-        pass
+    # 범용적으로 가장 안정적인 1.5-flash 엔드포인트 직접 호출
+    url = f"{GEMINI_API_BASE}/models/gemini-1.5-flash:generateContent"
 
-    if not target_model:
-        target_model = "models/gemini-2.5-flash"
-
-    if not target_model.startswith("models/"):
-        target_model = f"models/{target_model}"
-
-    url = f"{GEMINI_API_BASE}/{target_model}:generateContent"
     try:
         resp = requests.post(
             url,
             params={"key": api_key},
             json=payload,
+            headers={"Content-Type": "application/json"},
             timeout=30,
         )
     except requests.RequestException:
@@ -215,8 +204,8 @@ def api():
         try:
             err_msg = resp.json().get("error", {}).get("message", "알 수 없는 오류")
         except Exception:
-            err_msg = "알 수 없는 오류"
-        return jsonify({"error": "Gemini 오류: " + err_msg}), 502
+            err_msg = resp.text or "알 수 없는 오류"
+        return jsonify({"error": f"Gemini 오류: {err_msg}"}), 502
 
     try:
         result = resp.json()
